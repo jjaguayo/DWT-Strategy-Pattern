@@ -52,6 +52,8 @@ function(build_tests)
         gtest_main 
         DWT
     )
+
+    add_test(runUnitTests runUnitTests)
 endfunction()
 
 if(NOT CMAKE_BUILD_TYPE)

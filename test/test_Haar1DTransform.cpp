@@ -1,12 +1,13 @@
 #include "Haar1DTransform.hpp"
 
 #include "gtest/gtest.h"
+#include <vector>
 
 TEST(Haar1DTransform,constructor) {
   WaveletTransform* dwt = new Haar1DTransform();
   bool exceptionThrown;
   double* inputData = new double[8];
-  vector<int> lengthOfDimensions;
+  std::vector<int> lengthOfDimensions;
   double* coefficients;
   int maxLevel = 2;
 
