@@ -1,6 +1,6 @@
 #include "Haar1DTransform.hpp"
 
-using namespace std;
+#include <cstdlib>
 
 //
 // Purpose:
@@ -34,83 +34,73 @@ using namespace std;
 //   by James S. Walker have been instrumental in getting started with this 
 //   code.
 //
-double* Haar1DTransform::analyze(double* inputData, int maxLevel, vector<int> lengthOfDimension)
+double* Haar1DTransform::analyze(double* inputData, int maxLevel, std::vector<int> lengthOfDimension)
 {
-  double* finalCoefficients;
-  double* singleLevelCoefficients;
-  unsigned int totalLength;
-  int currentLevel;
-  unsigned int currentLvlCoeffSetSize;
-  vector<int> allowedMaxLevels = WaveletTransform::getMaxLevels(lengthOfDimension);
-
-  // Haar coefficients used in this algorithm.
-  double H0 = 0.7071067811865475;
-  double H1 = 0.7071067811865475;
-
-  // this is a transform for 1D data; throw an exception if the data is 
-  // not 1 dimensional
-  if (lengthOfDimension.size() > 1)
-  {
-    throw WaveletTransformException(string("Only 1 dimension allowed"));
-  }
-
-  // for now, we can only have input lengths that are a power of 2
-  totalLength = lengthOfDimension[0];
-  if ((totalLength & (totalLength - 1)) != 0)
-  {
-    throw WaveletTransformException("input length must equal a power of 2");
-  }
-
-  // if the levels being asked for are more than can be computed, throw an 
-  // exception
-  if (maxLevel > allowedMaxLevels[0])
-  {
-    string msg;
-    int allowedLevels = allowedMaxLevels[0];
-    msg += "Only ";
-    msg += + allowedLevels;
-    msg += " levels allowed";
-    throw WaveletTransformException(msg);
-  }
-
-  // allocate space for the coefficients variable 
-  finalCoefficients = new double[totalLength];
-  singleLevelCoefficients = new double[totalLength];
-
-  for (int i=0;i< totalLength;i++)
-  {
-    finalCoefficients[i] = inputData[i];
-    singleLevelCoefficients[i] = 0.0;
-  }
-
-  // calculate coefficients at each level until we reach the max level wanted
-  currentLevel = 0;
-  currentLvlCoeffSetSize = totalLength;
-
-  while (currentLevel < maxLevel)
-  {
-    currentLvlCoeffSetSize = currentLvlCoeffSetSize >> 1;
-
-    // Calculate the approximation and detail coefficients for a given level
-    for (int i = 0; i < currentLvlCoeffSetSize ;i++)
-    {
-      singleLevelCoefficients[i] = H0 * (finalCoefficients[2*i] + finalCoefficients[2*i+1]);
-      singleLevelCoefficients[i + currentLvlCoeffSetSize ] = 
-        H1 * (finalCoefficients[2*i] - finalCoefficients[2*i+1]);
+    double* finalCoefficients;
+    double* singleLevelCoefficients;
+    unsigned int totalLength;
+    int currentLevel;
+    unsigned int currentLvlCoeffSetSize;
+    std::vector<int> allowedMaxLevels = WaveletTransform::getMaxLevels(lengthOfDimension);
+  
+    // Haar coefficients used in this algorithm.
+    double H0 = 0.7071067811865475;
+    double H1 = 0.7071067811865475;
+  
+    // this is a transform for 1D data only
+    if (lengthOfDimension.size() != 1) {
+        throw WaveletTransformException(std::string("Only 1 dimension allowed"));
     }
-
-    // write the single level coefficients back to the final coefficients
-    for (int i = 0; i < 2 * currentLvlCoeffSetSize ; i++)
-    {
-      finalCoefficients[i] = singleLevelCoefficients[i];
+  
+    // for now, we can only have input lengths that are a power of 2
+    totalLength = lengthOfDimension[0];
+    if ((totalLength & (totalLength - 1)) != 0) {
+        throw WaveletTransformException("input length must equal a power of 2");
     }
-    
-    currentLevel++;
-  }
+  
+    // max levels requested must be less than max allowed
+    if (maxLevel > allowedMaxLevels[0]) {
+        std::string msg = "Only";
+        msg += allowedMaxLevels[0] + " levels allowed";
+        throw WaveletTransformException(msg);
+    }
+  
+    finalCoefficients = new double[totalLength];
+    singleLevelCoefficients = new double[totalLength];
+  
+    for (int i=0;i< totalLength;i++) {
+        finalCoefficients[i] = inputData[i];
+        singleLevelCoefficients[i] = 0.0;
+    }
+  
+    // calculate coefficients at each level until we reach the max level wanted
+    currentLevel = 0;
+    currentLvlCoeffSetSize = totalLength;
+  
+    while (currentLevel < maxLevel)
+    {
+        currentLvlCoeffSetSize = currentLvlCoeffSetSize >> 1;
+  
+        // Calculate the approximation and detail coefficients for a given level
+        for (int i = 0; i < currentLvlCoeffSetSize ;i++) {
+            singleLevelCoefficients[i] = 
+                H0 * (finalCoefficients[2*i] + finalCoefficients[2*i+1]);
 
-  delete [] singleLevelCoefficients;
-
-  return finalCoefficients;
+            singleLevelCoefficients[i + currentLvlCoeffSetSize] = 
+                H1 * (finalCoefficients[2*i] - finalCoefficients[2*i+1]);
+        }
+  
+        // write the single level coefficients back to the final coefficients
+        for (int i = 0; i < 2 * currentLvlCoeffSetSize ; i++) {
+            finalCoefficients[i] = singleLevelCoefficients[i];
+        }
+        
+        currentLevel++;
+    }
+  
+    delete [] singleLevelCoefficients;
+  
+    return finalCoefficients;
 }
 
 //
@@ -135,11 +125,70 @@ double* Haar1DTransform::analyze(double* inputData, int maxLevel, vector<int> le
 //   Jose John Aguayo
 
 // NOTES:
-//   Still needs to be implemented
+//   The method will throw an exception if 1) the input data size is not
+//   a power of 2, 2) the max level requested is larger than
+//   the max levels than can be achieved given the input data size
+//   or 3) the number of dimensions in the third parameter is
+//   greater than 1.
+//   The getMaxLevel method can be used to determine the
+//   maximum level that this method will accept.
+//   Need to recognize John Burkardt as his algorithm along with
+//   the text "A Primer on WAVELETS and Their Scientific Applications"
+//   by James S. Walker have been instrumental in getting started with this 
+//   code.
 //
-double* Haar1DTransform::synthesize(double* coefficients, int maxLevel, vector<int> lengthOfDimension)
+double* Haar1DTransform::synthesize(double* coefficients, int maxLevel, std::vector<int> lengthOfDimension)
 {
-  double* outputData;
+    double* outputData;
+    double* intermediateResults;
+    int totalLength;
+    int currentLevel;
+    std::vector<int> allowedMaxLevels = WaveletTransform::getMaxLevels(lengthOfDimension);
+  
+    // this is a transform for 1D data only
+    if (lengthOfDimension.size() != 1) {
+        throw WaveletTransformException(std::string("Only 1 dimension allowed"));
+    }
+  
+    // for now, we can only have input lengths that are a power of 2
+    totalLength = lengthOfDimension[0];
+    if ((totalLength & (totalLength - 1)) != 0) {
+        throw WaveletTransformException("input length must equal a power of 2");
+    }
+  
+    // max levels requested must be less than max allowed
+    if (maxLevel > allowedMaxLevels[0]) {
+        std::string msg = "Only";
+        msg += allowedMaxLevels[0] + " levels allowed";
+        throw WaveletTransformException(msg);
+    }
+  
+    double H = 0.7071067811865475;
+  
+    outputData = new double[totalLength];
+    intermediateResults = new double[totalLength];
+  
+    for (auto i = 0; i < totalLength; i++) {
+        outputData[i] = coefficients[i];
+        intermediateResults[i] = 0.0;
+    }
+  
+    currentLevel = 1;
 
-  return outputData;
+    while((currentLevel << 1) <= totalLength) {
+        for (auto i = 0; i < currentLevel; i++) {
+            intermediateResults[2*i] = H * (outputData[i] + outputData[i+currentLevel]);
+            intermediateResults[(2*i) + 1] = H * (outputData[i] - outputData[i+currentLevel]);
+        }
+  
+        for (auto i = 0; i < (currentLevel << 1); i++) {
+            outputData[i] = intermediateResults[i];
+        }
+  
+        currentLevel <<= 1;
+    }
+  
+    delete [] intermediateResults;
+  
+    return outputData;
 }

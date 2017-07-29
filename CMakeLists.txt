@@ -4,7 +4,6 @@ project(DWT CXX)
 
 set(TARGET_NAME "DWT")
 
-
 include_directories(${PROJECT_SOURCE_DIR}/hdrs)
 
 enable_testing()
@@ -24,9 +23,11 @@ function(build_on_linux)
 endfunction()
 
 function(build_tests)
-    # Download and unpack googletest at configure time
+    # Pull in the Google test cmakelist
     configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
 
+    # create the generator and the build the project tree in this projects
+    # build directory
     execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download" )
     execute_process(COMMAND "${CMAKE_COMMAND}" --build .
@@ -43,17 +44,19 @@ function(build_tests)
     add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
                      "${CMAKE_BINARY_DIR}/googletest-build")
 
-    add_executable(runUnitTests
+    # add the test executable
+    add_executable(dwt_tests
                    ${PROJECT_SOURCE_DIR}/test/test_Haar1DTransform.cpp
     )
 
-    target_link_libraries(runUnitTests 
+    target_link_libraries(dwt_tests 
         gtest 
         gtest_main 
         DWT
     )
 
-    add_test(runUnitTests runUnitTests)
+    # add the test to the list of execuatle tests
+    add_test(dwt_tests dwt_tests)
 endfunction()
 
 if(NOT CMAKE_BUILD_TYPE)
