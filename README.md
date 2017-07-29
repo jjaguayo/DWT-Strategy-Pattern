@@ -17,12 +17,39 @@ pattern but in the end, using concrete subclasses seemed more flexible for the
 user as the template type would need to be specified at compile time, however,
 the subclass approach allowed concrete algorithms to be instantiated at run time.
 
-Some current todos in the short term given how I hope to utilize these
-classes are
+Some current todos in the short term given how I hope to do
 
-1) implement the synthesize method for the Haar 1D transform.
-2) implement the analyze methods for a few more "complex" wavelets
+1) Add a Jenkinsfile to automate build and test
+2) Modify the CMakeList files to build on Mac and Windows
+3) implement the analyze / synthesize methods for a few more "complex" wavelets
 
-Some longer term todos include
-1) integrate a better testing framework
-2) construct a more thorough set of test cases
+Dependencies
+============
+CMake 3.0 or higher
+A C++11 compiler
+Linux
+
+Build
+=====
+This project endorses out-of-source building, so to build the project, cd to the base directory and execute the following:
+
+```
+mkdir build
+cd build
+make
+```
+
+The Wavelet transform functions will be located in a shared library in the lib/ directory.
+
+Testing
+=======
+After building, the suite of tests can be run from the build directory with the following command:
+```
+make test ARGS="-V"
+```
+
+or 
+
+```
+ctest -V
+```
